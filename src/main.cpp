@@ -25,15 +25,17 @@ MCEC::Drivetrain8 drivetrain(
 
 
 
-void ReadController(){
-    lStick.Set(
+bool ReadController(){
+    rStick.Set(
         controller.Axis1.position(), 
         controller.Axis2.position() 
     );
-    rStick.Set(
+    lStick.Set(
         controller.Axis3.position(), 
         controller.Axis4.position()
     );
+
+    return (lStick.x != 0 || lStick.y != 0 || rStick.x != 0 || rStick.y != 0);
 }
 
 int main() {
@@ -49,9 +51,10 @@ int main() {
     while(1) {
         if(!inertial.isCalibrating()){
 
-            ReadController();
+            if(ReadController()){
+                drivetrain.Drive(lStick.y, rStick.x);
+            }
 
-            drivetrain.Drive(lStick.y, rStick.x);
             
             sprintf(rotation, "rotation:%.2f, heading:%.2f", inertial.rotation(), inertial.heading());
             Brain.Screen.printAt(10, 50, rotation);

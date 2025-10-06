@@ -1,8 +1,32 @@
 #include "MCEC_Objects.h"
+// @param joyX: input from -100 to 100
+// @param joyY: input from -100 to 100
+void MCEC::Drivetrain8::Drive(int joyX, int joyY){
+    // Ensure the joystick inputs are within the valid range
+    if(abs(joyX) > 100 || abs(joyY) > 100){
+        return;
+    }
 
-void MCEC::Drivetrain8::Drive(int powerX, int powerY){
-    int Lpower = (powerX / 2) + (powerY / 2);
-    int Rpower = (powerX * 3) - (powerY * 3);
+    // Apply a deadzone to the joystick inputs
+    #define DEADZONE 5
+    joyX = (abs(joyX) < DEADZONE) ? 0 : joyX;
+    joyY = (abs(joyY) < DEADZONE) ? 0 : joyY;
+
+    // Setup the influence of each joystick axis
+    float totalPower = joyX + joyY;
+    // Handle case where joysticks are both pointed in the wrong axis
+    if(totalPower == 0) return; 
+    float py = (joyY / totalPower);
+    float px = (joyX / totalPower);
+
+    // Apply a scaling factor to each axis
+    float xPower = (joyX * 6 * px);
+    float yPower = (joyY * 6 * py);
+
+    int Lpower = (xPower + yPower);
+    int Rpower = (xPower - yPower);
+
+    // Apply the power to the motors
     _mR1.spin(vex::forward, Rpower, vex::rpm);
     _mR2.spin(vex::forward, Rpower, vex::rpm);
     _mR3.spin(vex::forward, Rpower, vex::rpm);
