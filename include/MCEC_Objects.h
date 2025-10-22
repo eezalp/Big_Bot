@@ -18,7 +18,9 @@ namespace MCEC{
             // @param joyX: input from -100 to 100
             // @param joyY: input from -100 to 100
             void Drive(int joyX, int joyY);
+            void ApplyPower(int lPow, int rPow);
             void Stop();
+            float curPowerR, curPowerL;
         private:
             vex::motor _mR1, _mR2, _mR3, _mR4;
             vex::motor _mL1, _mL2, _mL3, _mL4;
@@ -37,5 +39,7 @@ namespace MCEC{
             y = _y;
         }
     };
-    }
+
+    float Lerp(float a, float b, float t);
+}
 #endif

@@ -14,6 +14,9 @@ vex::inertial inertial = vex::inertial(vex::PORT2);
 vex::motor motor1 = vex::motor(vex::PORT10);
 vex::controller controller = vex::controller();
 
+vex::rotation fbRot = vex::rotation(vex::PORT5);
+vex::rotation lrRot = vex::rotation(vex::PORT3);
+
 // define your global instances of motors and other devices here
 
 MCEC::Joystick lStick, rStick;
@@ -23,22 +26,34 @@ MCEC::Drivetrain8 drivetrain(
     vex::PORT11, vex::PORT12, vex::PORT13, vex::PORT14
 );
 
-
+#define TRACKING_WHEEL_RADIUS        1.625f // in inches
+#define TRACKING_WHEEL_CIRCUMFERENCE (2 * TRACKING_WHEEL_RADIUS * M_PI) // in inches
 
 bool ReadController(){
     rStick.Set(
         controller.Axis1.position(), 
-        controller.Axis2.position() 
+        controller.Axis2.position()
     );
     lStick.Set(
-        controller.Axis3.position(), 
-        controller.Axis4.position()
+        controller.Axis4.position(), 
+        controller.Axis3.position()
     );
 
     return (lStick.x != 0 || lStick.y != 0 || rStick.x != 0 || rStick.y != 0);
 }
 
-int main() {
+void ReadPosition(){
+    char location[60];
+    sprintf(
+        location, 
+        "fb:%f, rl:%f    ",
+        TRACKING_WHEEL_CIRCUMFERENCE * fbRot.position(vex::rotationUnits::rev), 
+        TRACKING_WHEEL_CIRCUMFERENCE * lrRot.position(vex::rotationUnits::rev)
+    );
+    Brain.Screen.printAt(10, 130, location);
+}
+
+int main(){
     inertial.calibrate(3);
     char rotation[60], joystick[60];
 
@@ -48,11 +63,16 @@ int main() {
     inertial.setRotation(0, vex::deg);
     controller.rumble("...");
 
+    fbRot.resetPosition();
+    lrRot.resetPosition();
+
     while(1) {
         if(!inertial.isCalibrating()){
 
             if(ReadController()){
                 drivetrain.Drive(lStick.y, rStick.x);
+            }else{
+                drivetrain.Stop();
             }
 
             
@@ -66,6 +86,8 @@ int main() {
                 rStick.x, rStick.y
             );
             Brain.Screen.printAt(10, 100, joystick);
+
+            ReadPosition();
         }
         
         vex::this_thread::sleep_for(10);
