@@ -7,6 +7,7 @@
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 #include "MCEC_Objects.h"
+#include <cmath>
 
 // A global instance of vex::brain used for printing to the V5 brain screen
 vex::brain Brain;
@@ -29,6 +30,9 @@ MCEC::Drivetrain8 drivetrain(
 #define TRACKING_WHEEL_RADIUS        1.625f // in inches
 #define TRACKING_WHEEL_CIRCUMFERENCE (2 * TRACKING_WHEEL_RADIUS * M_PI) // in inches
 
+float xOff = 0, yOff = 0;
+float initialHeading = 0;
+
 bool ReadController(){
     rStick.Set(
         controller.Axis1.position(), 
@@ -43,14 +47,25 @@ bool ReadController(){
 }
 
 void ReadPosition(){
-    char location[60];
-    sprintf(
-        location, 
-        "fb:%f, rl:%f    ",
-        TRACKING_WHEEL_CIRCUMFERENCE * fbRot.position(vex::rotationUnits::rev), 
-        TRACKING_WHEEL_CIRCUMFERENCE * lrRot.position(vex::rotationUnits::rev)
-    );
-    Brain.Screen.printAt(10, 130, location);
+    yOff += 
+        TRACKING_WHEEL_CIRCUMFERENCE * 
+        fbRot.position(vex::rotationUnits::rev) * 
+        std::sin((-inertial.yaw() + 90) * (M_PI / 180.0));
+    xOff += 
+        TRACKING_WHEEL_CIRCUMFERENCE * 
+        fbRot.position(vex::rotationUnits::rev) * 
+        std::cos((-inertial.yaw() + 90) * (M_PI / 180.0));
+    yOff += 
+        TRACKING_WHEEL_CIRCUMFERENCE * 
+        lrRot.position(vex::rotationUnits::rev) * 
+        std::sin((-inertial.yaw() + 180) * (M_PI / 180.0));
+    xOff +
+        TRACKING_WHEEL_CIRCUMFERENCE * 
+        lrRot.position(vex::rotationUnits::rev) * 
+        std::cos((-inertial.yaw() + 180) * (M_PI / 180.0));
+
+    fbRot.resetPosition();
+    lrRot.resetPosition();
 }
 
 int main(){
@@ -61,7 +76,7 @@ int main(){
     while(inertial.isCalibrating());
     inertial.setHeading(0, vex::deg);
     inertial.setRotation(0, vex::deg);
-    controller.rumble("...");
+    controller.rumble("-.. .. .");
 
     fbRot.resetPosition();
     lrRot.resetPosition();
@@ -81,9 +96,8 @@ int main(){
             
             sprintf(
                 joystick, 
-                "LX:%d, LY:%d, RX:%d, RY:%d     ",
-                lStick.x, lStick.y,
-                rStick.x, rStick.y
+                "xOff:%.2f, yOff:%.2f     ",
+                xOff, yOff
             );
             Brain.Screen.printAt(10, 100, joystick);
 
