@@ -6,32 +6,54 @@
 /*    Description:  V5 project                                                */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------
+|                 Brain Port Assignments
+|     Right Motor 1: PORT 1 | PORT 11: 
+|     Right Motor 2: PORT 2 | PORT 12: 
+|     Right Motor 3: PORT 3 | PORT 13: 
+|     Right Motor 4: PORT 4 | PORT 14: 
+|      Left Motor 5: PORT 5 | PORT 15: 
+|      Left Motor 6: PORT 6 | PORT 16: 
+|      Left Motor 7: PORT 7 | PORT 17: 
+|      Left Motor 8: PORT 8 | PORT 18: 
+|   X-axis odometry: PORT 9 | PORT 19: 
+|  Y-axis odometry: PORT 10 | PORT 20: 
+----------------------------------------------------------------*/
+
+
 #include "MCEC_Objects.h"
 #include <cmath>
 
 // A global instance of vex::brain used for printing to the V5 brain screen
 vex::brain Brain;
-vex::inertial inertial = vex::inertial(vex::PORT2);
-vex::motor motor1 = vex::motor(vex::PORT10);
+vex::inertial inertial = vex::inertial(vex::PORT20);
 vex::controller controller = vex::controller();
 
-vex::rotation fbRot = vex::rotation(vex::PORT5);
-vex::rotation lrRot = vex::rotation(vex::PORT3);
+vex::rotation fbRot = vex::rotation(vex::PORT9);
+vex::rotation lrRot = vex::rotation(vex::PORT10);
+
+vex::optical ballOptical = vex::optical( vex::PORT10 );
+vex::distance tripwire = vex::distance( vex::PORT16 );
 
 // define your global instances of motors and other devices here
 
 MCEC::Joystick lStick, rStick;
 
 MCEC::Drivetrain8 drivetrain(
-    vex::PORT6 , vex::PORT7 , vex::PORT8 , vex::PORT9 , 
-    vex::PORT11, vex::PORT12, vex::PORT13, vex::PORT14
+    vex::PORT1 , vex::PORT2 , vex::PORT3 , vex::PORT4 , 
+    vex::PORT5, vex::PORT6, vex::PORT7, vex::PORT8
 );
+
+vex::motor intakeFront = vex::motor(vex::PORT11);
+vex::motor intakeBack  = vex::motor(vex::PORT12);
 
 #define TRACKING_WHEEL_RADIUS        1.625f // in inches
 #define TRACKING_WHEEL_CIRCUMFERENCE (2 * TRACKING_WHEEL_RADIUS * M_PI) // in inches
 
 float xOff = 0, yOff = 0;
 float initialHeading = 0;
+bool intakeIn = false, intakeOut = false;
 
 bool ReadController(){
     rStick.Set(
@@ -43,7 +65,51 @@ bool ReadController(){
         controller.Axis3.position()
     );
 
+    intakeIn  = controller.ButtonR2.pressing();
+    intakeOut = controller.ButtonL2.pressing();
+
     return (lStick.x != 0 || lStick.y != 0 || rStick.x != 0 || rStick.y != 0);
+}
+
+void ColorRead(){
+    char buffer[64];
+
+    double hue = ballOptical.hue();
+    double brightness = ballOptical.brightness();
+    vex::color detectedColor = ballOptical.color();
+    bool isNear = ballOptical.isNearObject();
+
+    Brain.Screen.clearScreen();
+    Brain.Screen.setCursor(1,1);
+
+    if(isNear){
+        if((0xFF0000 & (uint32_t)detectedColor) >> 16 == 0xff){
+            if(detectedColor == 0xFF0000)
+                Brain.Screen.print("Red Red");
+            else
+                Brain.Screen.print("Redish");
+        }else if((0x00FF00 & (uint32_t)detectedColor) >> 8 == 0xff){
+            if(detectedColor == 0x00ff00)
+                Brain.Screen.print("Green Green");
+            else
+                Brain.Screen.print("Greenish");
+        }else if((0x0000FF & (uint32_t)detectedColor) == 0xff){
+            if(detectedColor == 0x0000FF)
+                Brain.Screen.print("Blue Blue");
+            else
+                Brain.Screen.print("Blueish");
+        }else{
+            Brain.Screen.print("Color: Unknown");
+        }
+
+        Brain.Screen.setCursor(2,1);
+        Brain.Screen.print("%06x", (uint32_t)detectedColor);
+        Brain.Screen.setCursor(3,1);
+        Brain.Screen.print("Hue: %.2f", hue);
+    }
+    
+    Brain.Screen.setCursor(3,1);
+    Brain.Screen.print(tripwire.objectDistance(vex::distanceUnits::mm));
 }
 
 void ReadPosition(){
@@ -88,6 +154,17 @@ int main(){
                 drivetrain.Drive(lStick.y, rStick.x);
             }else{
                 drivetrain.Stop();
+            }
+
+            if(intakeIn && !intakeOut){ // Intake in
+                intakeFront.spin(vex::forward, 300, vex::rpm);
+                intakeBack.spin(vex::reverse, 300, vex::rpm);
+            }else if(!intakeIn && intakeOut){ // Intake out
+                intakeFront.spin(vex::reverse, 300, vex::rpm);
+                intakeBack.spin(vex::forward, 300, vex::rpm);
+            }else{
+                intakeFront.stop();
+                intakeBack.stop();
             }
 
             
