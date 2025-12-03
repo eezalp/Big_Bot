@@ -9,16 +9,16 @@
 
 /*----------------------------------------------------------------
 |                 Brain Port Assignments
-|     Right Motor 1: PORT 1 | PORT 11: 
-|     Right Motor 2: PORT 2 | PORT 12: 
+|     Right Motor 1: PORT 1 | PORT 11: Intake Bottom Motor
+|     Right Motor 2: PORT 2 | PORT 12: Intake Top Motor
 |     Right Motor 3: PORT 3 | PORT 13: 
-|     Right Motor 4: PORT 4 | PORT 14: 
-|      Left Motor 5: PORT 5 | PORT 15: 
+|     Right Motor 4: PORT 4 | PORT 14: Color Sensor
+|      Left Motor 5: PORT 5 | PORT 15: Sorting Tripwire
 |      Left Motor 6: PORT 6 | PORT 16: 
 |      Left Motor 7: PORT 7 | PORT 17: 
 |      Left Motor 8: PORT 8 | PORT 18: 
-|   X-axis odometry: PORT 9 | PORT 19: 
-|  Y-axis odometry: PORT 10 | PORT 20: 
+|   X-axis odometry: PORT 9 | PORT 19: Radio
+|  Y-axis odometry: PORT 10 | PORT 20: Inertial
 ----------------------------------------------------------------*/
 
 
@@ -33,8 +33,8 @@ vex::controller controller = vex::controller();
 vex::rotation fbRot = vex::rotation(vex::PORT9);
 vex::rotation lrRot = vex::rotation(vex::PORT10);
 
-vex::optical ballOptical = vex::optical( vex::PORT10 );
-vex::distance tripwire = vex::distance( vex::PORT16 );
+vex::optical ballOptical = vex::optical( vex::PORT14 );
+vex::distance tripwire = vex::distance( vex::PORT15 );
 
 // define your global instances of motors and other devices here
 
