@@ -61,11 +61,17 @@ bool intakeIn = false, intakeOut = false;
 
 bool xDown, yDown, aDown, bDown;
 
+bool isOpen = false;
+
 void ColorDoorOpen(){
-    sorterDoor.spinTo(0, vex::degrees, 10, vex::rpm);
+    // sorterDoor.spinTo(0, vex::degrees, 10, vex::rpm);
+    sorterDoor.spinFor(vex::reverse, 360, vex::deg);
+    isOpen = true;
 }
 void ColorDoorClose(){
-    sorterDoor.spinTo(120, vex::degrees, 10, vex::rpm);
+    // sorterDoor.spinTo(120, vex::degrees, 10, vex::rpm);
+    sorterDoor.spinFor(vex::forward, 360, vex::deg);
+    isOpen = false;
 }
 
 bool ReadController(){
@@ -174,10 +180,10 @@ int main(){
                 drivetrain.Stop();
             }
 
-            if(xDown){
+            if(xDown && !isOpen){
                 ColorDoorOpen();
             }
-            if(yDown){
+            if(yDown && isOpen){
                 ColorDoorClose();
             }
             if(aDown){
