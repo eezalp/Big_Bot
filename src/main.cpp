@@ -18,7 +18,7 @@
 |      Left Motor 7: PORT 7 | PORT 17: 
 |      Left Motor 8: PORT 8 | PORT 18: Color Sensor
 |   X-axis odometry: PORT 9 | PORT 19: Radio
-| Intake Midsection: PORT 10 | PORT 20: Inertial
+|Intake Midsection: PORT 10 | PORT 20: Inertial
 ----------------------------------------------------------------*/
 
 
@@ -59,6 +59,15 @@ float xOff = 0, yOff = 0;
 float initialHeading = 0;
 bool intakeIn = false, intakeOut = false;
 
+bool xDown, yDown, aDown, bDown;
+
+void ColorDoorOpen(){
+    sorterDoor.spinTo(0, vex::degrees, 10, vex::rpm);
+}
+void ColorDoorClose(){
+    sorterDoor.spinTo(120, vex::degrees, 10, vex::rpm);
+}
+
 bool ReadController(){
     rStick.Set(
         controller.Axis1.position(), 
@@ -72,6 +81,11 @@ bool ReadController(){
     intakeIn  = controller.ButtonR2.pressing();
     intakeOut = controller.ButtonL2.pressing();
 
+    xDown = controller.ButtonX.pressing();
+    yDown = controller.ButtonY.pressing();
+    bDown = controller.ButtonB.pressing();
+    aDown = controller.ButtonA.pressing();
+    
     return (lStick.x != 0 || lStick.y != 0 || rStick.x != 0 || rStick.y != 0);
 }
 
@@ -146,7 +160,7 @@ int main(){
     while(inertial.isCalibrating());
     inertial.setHeading(0, vex::deg);
     inertial.setRotation(0, vex::deg);
-    controller.rumble("-.. .. .");
+    controller.rumble("... -.. .. -.-- -... -");
 
     fbRot.resetPosition();
     lrRot.resetPosition();
@@ -160,14 +174,26 @@ int main(){
                 drivetrain.Stop();
             }
 
+            if(xDown){
+                ColorDoorOpen();
+            }
+            if(yDown){
+                ColorDoorClose();
+            }
+            if(aDown){
+                sorterMotor.spin(vex::forward, 300, vex::rpm);
+            }else{
+                sorterMotor.stop();
+            }
+
             if(intakeIn && !intakeOut){ // Intake in
                 intakeFront.spin(vex::forward, 300, vex::rpm);
                 intakeBack.spin(vex::reverse, 300, vex::rpm);
-                intakeMid.spin(vex::reverse, 300, vex::rpm);
+                intakeMid.spin(vex::forward, 300, vex::rpm);
             }else if(!intakeIn && intakeOut){ // Intake out
                 intakeFront.spin(vex::reverse, 300, vex::rpm);
                 intakeBack.spin(vex::forward, 300, vex::rpm);
-                intakeMid.spin(vex::forward, 300, vex::rpm);
+                intakeMid.spin(vex::reverse, 300, vex::rpm);
             }else{
                 intakeFront.stop();
                 intakeBack.stop();
