@@ -149,7 +149,7 @@ void ReadPosition(){
         TRACKING_WHEEL_CIRCUMFERENCE * 
         lrRot.position(vex::rotationUnits::rev) * 
         std::sin((-inertial.yaw() + 180) * (M_PI / 180.0));
-    xOff +
+    xOff +=
         TRACKING_WHEEL_CIRCUMFERENCE * 
         lrRot.position(vex::rotationUnits::rev) * 
         std::cos((-inertial.yaw() + 180) * (M_PI / 180.0));
