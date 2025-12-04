@@ -11,14 +11,14 @@
 |                 Brain Port Assignments
 |     Right Motor 1: PORT 1 | PORT 11: Intake Bottom Motor
 |     Right Motor 2: PORT 2 | PORT 12: Intake Top Motor
-|     Right Motor 3: PORT 3 | PORT 13: 
-|     Right Motor 4: PORT 4 | PORT 14: Color Sensor
-|      Left Motor 5: PORT 5 | PORT 15: Sorting Tripwire
-|      Left Motor 6: PORT 6 | PORT 16: 
+|     Right Motor 3: PORT 3 | PORT 13: Sorter Motor Driver
+|     Right Motor 4: PORT 4 | PORT 14: Sorter Door Driver
+|      Left Motor 5: PORT 5 | PORT 15: Turret Driver
+|      Left Motor 6: PORT 6 | PORT 16: Turret Rollers
 |      Left Motor 7: PORT 7 | PORT 17: 
-|      Left Motor 8: PORT 8 | PORT 18: 
+|      Left Motor 8: PORT 8 | PORT 18: Color Sensor
 |   X-axis odometry: PORT 9 | PORT 19: Radio
-|  Y-axis odometry: PORT 10 | PORT 20: Inertial
+| Intake Midsection: PORT 10 | PORT 20: Inertial
 ----------------------------------------------------------------*/
 
 
@@ -45,8 +45,12 @@ MCEC::Drivetrain8 drivetrain(
     vex::PORT5, vex::PORT6, vex::PORT7, vex::PORT8
 );
 
-vex::motor intakeFront = vex::motor(vex::PORT11);
-vex::motor intakeBack  = vex::motor(vex::PORT12);
+vex::motor intakeMid    = vex::motor(vex::PORT10);
+vex::motor intakeFront  = vex::motor(vex::PORT11);
+vex::motor intakeBack   = vex::motor(vex::PORT12);
+vex::motor sorterMotor  = vex::motor(vex::PORT13);
+vex::motor sorterDoor   = vex::motor(vex::PORT14);
+vex::motor turretDriver = vex::motor(vex::PORT15);
 
 #define TRACKING_WHEEL_RADIUS        1.625f // in inches
 #define TRACKING_WHEEL_CIRCUMFERENCE (2 * TRACKING_WHEEL_RADIUS * M_PI) // in inches
@@ -159,12 +163,15 @@ int main(){
             if(intakeIn && !intakeOut){ // Intake in
                 intakeFront.spin(vex::forward, 300, vex::rpm);
                 intakeBack.spin(vex::reverse, 300, vex::rpm);
+                intakeMid.spin(vex::reverse, 300, vex::rpm);
             }else if(!intakeIn && intakeOut){ // Intake out
                 intakeFront.spin(vex::reverse, 300, vex::rpm);
                 intakeBack.spin(vex::forward, 300, vex::rpm);
+                intakeMid.spin(vex::forward, 300, vex::rpm);
             }else{
                 intakeFront.stop();
                 intakeBack.stop();
+                intakeMid.stop();
             }
 
             
