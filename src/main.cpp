@@ -19,6 +19,7 @@
 |      Left Motor 8: PORT 8 | PORT 18: Color Sensor              |
 |   X-axis odometry: PORT 9 | PORT 19: Radio                     |
 |       Intake Top: PORT 10 | PORT 20: Inertial                  |
+|                     PORT 21: None                              |
 ----------------------------------------------------------------*/
 // PORT 21: 
 
