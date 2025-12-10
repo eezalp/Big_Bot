@@ -9,18 +9,31 @@
 
 /*----------------------------------------------------------------
 |                 Brain Port Assignments
-|     Right Motor 1: PORT 1 | PORT 11: Intake Bottom Motor
+|     Right Motor 1: PORT 1 | PORT 11: Intake Mid Motor
 |     Right Motor 2: PORT 2 | PORT 12: Intake Top Motor
 |     Right Motor 3: PORT 3 | PORT 13: Sorter Motor Driver
 |     Right Motor 4: PORT 4 | PORT 14: Sorter Door Driver
 |      Left Motor 5: PORT 5 | PORT 15: Turret Driver
 |      Left Motor 6: PORT 6 | PORT 16: Turret Rollers
-|      Left Motor 7: PORT 7 | PORT 17: 
+|      Left Motor 7: PORT 7 | PORT 17: Shiv Motor
 |      Left Motor 8: PORT 8 | PORT 18: Color Sensor
 |   X-axis odometry: PORT 9 | PORT 19: Radio
-|Intake Midsection: PORT 10 | PORT 20: Inertial
+|       Intake Top: PORT 10 | PORT 20: Inertial
 ----------------------------------------------------------------*/
+// PORT 21: 
 
+
+/*---------------------------------------------------------------- 
+|                     Controls
+| L2: Outtake                            R2: Intake
+| L1: None                               R1: None
+|
+| Ls3: F/B                               Rs2: L/R
+| Ls4: None                               Rs1: None
+|       Up: None                 X:None
+| Left: None  Right: None    Y:None   A:Sort Wheel Go
+|       Down: None               B:None
+----------------------------------------------------------------*/
 
 #include "MCEC_Objects.h"
 #include <cmath>
@@ -51,6 +64,8 @@ vex::motor intakeBack   = vex::motor(vex::PORT12);
 vex::motor sorterMotor  = vex::motor(vex::PORT13);
 vex::motor sorterDoor   = vex::motor(vex::PORT14);
 vex::motor turretDriver = vex::motor(vex::PORT15);
+vex::motor turretRoller = vex::motor(vex::PORT16);
+vex::motor shivMotor    = vex::motor(vex::PORT17);
 
 #define TRACKING_WHEEL_RADIUS        1.625f // in inches
 #define TRACKING_WHEEL_CIRCUMFERENCE (2 * TRACKING_WHEEL_RADIUS * M_PI) // in inches
@@ -158,6 +173,30 @@ void ReadPosition(){
     lrRot.resetPosition();
 }
 
+void IntakeGo(){
+    intakeFront.spin(vex::forward, 300, vex::rpm);
+    intakeBack.spin(vex::reverse, 300, vex::rpm);
+    intakeMid.spin(vex::reverse, 300, vex::rpm);
+
+    turretRoller.spin(vex::forward, 300, vex::rpm);
+}
+
+void IntakeNotGo(){
+    intakeFront.spin(vex::reverse, 300, vex::rpm);
+    intakeBack.spin(vex::forward, 300, vex::rpm);
+    intakeMid.spin(vex::forward, 300, vex::rpm);
+
+    turretRoller.spin(vex::reverse, 300, vex::rpm);
+}
+
+void IntakeStop(){
+    intakeFront.stop();
+    intakeBack.stop();
+    intakeMid.stop();
+
+    turretRoller.stop();
+}
+
 int main(){
     inertial.calibrate(3);
     char rotation[60], joystick[60];
@@ -193,29 +232,12 @@ int main(){
             }
 
             if(intakeIn && !intakeOut){ // Intake in
-                intakeFront.spin(vex::forward, 300, vex::rpm);
-                intakeBack.spin(vex::reverse, 300, vex::rpm);
-                intakeMid.spin(vex::forward, 300, vex::rpm);
+                IntakeGo();
             }else if(!intakeIn && intakeOut){ // Intake out
-                intakeFront.spin(vex::reverse, 300, vex::rpm);
-                intakeBack.spin(vex::forward, 300, vex::rpm);
-                intakeMid.spin(vex::reverse, 300, vex::rpm);
+                IntakeNotGo();
             }else{
-                intakeFront.stop();
-                intakeBack.stop();
-                intakeMid.stop();
+                IntakeStop();
             }
-
-            
-            sprintf(rotation, "rotation:%.2f, heading:%.2f", inertial.rotation(), inertial.heading());
-            Brain.Screen.printAt(10, 50, rotation);
-            
-            sprintf(
-                joystick, 
-                "xOff:%.2f, yOff:%.2f     ",
-                xOff, yOff
-            );
-            Brain.Screen.printAt(10, 100, joystick);
 
             ReadPosition();
         }
