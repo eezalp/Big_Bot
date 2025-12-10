@@ -8,31 +8,31 @@
 /*----------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------
-|                 Brain Port Assignments
-|     Right Motor 1: PORT 1 | PORT 11: Intake Mid Motor
-|     Right Motor 2: PORT 2 | PORT 12: Intake Top Motor
-|     Right Motor 3: PORT 3 | PORT 13: Sorter Motor Driver
-|     Right Motor 4: PORT 4 | PORT 14: Sorter Door Driver
-|      Left Motor 5: PORT 5 | PORT 15: Turret Driver
-|      Left Motor 6: PORT 6 | PORT 16: Turret Rollers
-|      Left Motor 7: PORT 7 | PORT 17: Shiv Motor
-|      Left Motor 8: PORT 8 | PORT 18: Color Sensor
-|   X-axis odometry: PORT 9 | PORT 19: Radio
-|       Intake Top: PORT 10 | PORT 20: Inertial
+|                 Brain Port Assignments                         |
+|     Right Motor 1: PORT 1 | PORT 11: Intake Mid Motor          |
+|     Right Motor 2: PORT 2 | PORT 12: Intake Top Motor          |
+|     Right Motor 3: PORT 3 | PORT 13: Sorter Motor Driver       |
+|     Right Motor 4: PORT 4 | PORT 14: Sorter Door Driver        |
+|      Left Motor 5: PORT 5 | PORT 15: Turret Driver             |
+|      Left Motor 6: PORT 6 | PORT 16: Turret Rollers            |
+|      Left Motor 7: PORT 7 | PORT 17: Shiv Motor                |
+|      Left Motor 8: PORT 8 | PORT 18: Color Sensor              |
+|   X-axis odometry: PORT 9 | PORT 19: Radio                     |
+|       Intake Top: PORT 10 | PORT 20: Inertial                  |
 ----------------------------------------------------------------*/
 // PORT 21: 
 
 
 /*---------------------------------------------------------------- 
-|                     Controls
-| L2: Outtake                            R2: Intake
-| L1: None                               R1: None
-|
-| Ls3: F/B                               Rs2: L/R
-| Ls4: None                               Rs1: None
-|       Up: None                 X:None
-| Left: None  Right: None    Y:None   A:Sort Wheel Go
-|       Down: None               B:None
+|                     Controls                                   |
+| L2: Outtake                            R2: Intake              |
+| L1: None                               R1: None                |
+|                                                                |
+| Ls3: F/B                               Rs2: L/R                |
+| Ls4: None                              Rs1: None               |
+|       Up: None                 X:None                          |
+| Left: None  Right: None    Y:None   A:Sort Wheel Go            |
+|       Down: None               B:None                          |
 ----------------------------------------------------------------*/
 
 #include "MCEC_Objects.h"
