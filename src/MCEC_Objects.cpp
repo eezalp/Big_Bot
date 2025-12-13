@@ -59,13 +59,13 @@ void MCEC::Drivetrain8::Stop(){
     curPowerL = 0;
     curPowerR = 0;
 
-    _mR1.stop();
-    _mR2.stop();
-    _mR3.stop();
-    _mR4.stop();
+    _mR1.stop(vex::brakeType::brake);
+    _mR2.stop(vex::brakeType::brake);
+    _mR3.stop(vex::brakeType::brake);
+    _mR4.stop(vex::brakeType::brake);
 
-    _mL1.stop();
-    _mL2.stop();
-    _mL3.stop();
-    _mL4.stop();
+    _mL1.stop(vex::brakeType::brake);
+    _mL2.stop(vex::brakeType::brake);
+    _mL3.stop(vex::brakeType::brake);
+    _mL4.stop(vex::brakeType::brake);
 }
