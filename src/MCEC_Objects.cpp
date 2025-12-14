@@ -4,6 +4,10 @@ float MCEC::Lerp(float a, float b, float t){
     return ((1 - t) * a) + (b * t);
 }
 
+void MCEC::Drivetrain8::SetInertial(vex::inertial* _inertial){
+  inertial = _inertial;
+}
+
 // @param joyX: input from -100 to 100
 // @param joyY: input from -100 to 100
 void MCEC::Drivetrain8::Drive(int joyX, int joyY){
@@ -68,4 +72,48 @@ void MCEC::Drivetrain8::Stop(){
     _mL2.stop(vex::brakeType::brake);
     _mL3.stop(vex::brakeType::brake);
     _mL4.stop(vex::brakeType::brake);
+}
+
+void MCEC::Drivetrain8::Rotate(int deg){
+  while(inertial->heading() < deg){
+    Drive(0, 30);
+  }
+}
+
+void MCEC::Drivetrain8::Spin(float revs){
+  _mR1.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR2.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR3.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR4.spinTo(revs, vex::rotationUnits::rev, false);
+
+  _mL1.spinTo(revs, vex::rotationUnits::rev, false);
+  _mL2.spinTo(revs, vex::rotationUnits::rev, false);
+  _mL3.spinTo(revs, vex::rotationUnits::rev, false);
+  _mL4.spinTo(revs, vex::rotationUnits::rev, true);
+}
+
+void MCEC::Controller::Set(){
+    rStick.Set(
+        controller.Axis1.position(), 
+        controller.Axis2.position()
+    );
+    lStick.Set(
+        controller.Axis4.position(), 
+        controller.Axis3.position()
+    );
+
+    r1Down = controller.ButtonR1.pressing();
+    l1Down = controller.ButtonL1.pressing();
+    r2Down = controller.ButtonR2.pressing();
+    l2Down = controller.ButtonL2.pressing();
+
+    xDown = controller.ButtonX.pressing();
+    yDown = controller.ButtonY.pressing();
+    bDown = controller.ButtonB.pressing();
+    aDown = controller.ButtonA.pressing();
+
+    leftDown = controller.ButtonLeft.pressing();
+    rightDown = controller.ButtonRight.pressing();
+    downDown = controller.ButtonDown.pressing();
+    upDown = controller.ButtonUp.pressing();
 }

@@ -25,7 +25,7 @@
 /*--------------------
  | Brain 3-Wire Ports |
  |   A: Turret Pot    |
- |   B: None          |
+ |   B: Front Gate    |
  |   C: None          |
  |   D: None          |
  |   E: None          |
@@ -56,16 +56,13 @@
 
 vex::brain Brain;
 vex::inertial inertial = vex::inertial(vex::PORT9);
-vex::controller controller = vex::controller();
+vex::competition comp;
 
 vex::optical ballOptical = vex::optical(vex::PORT18);
 
-// define your global instances of motors and other devices here
-
-MCEC::Joystick lStick, rStick;
 
 MCEC::Drivetrain8 drivetrain(
-    vex::PORT1 , vex::PORT2 , vex::PORT3 , vex::PORT4 , 
+    vex::PORT1, vex::PORT2, vex::PORT3, vex::PORT4, 
     vex::PORT5, vex::PORT6, vex::PORT7, vex::PORT8
 );
 
@@ -82,35 +79,61 @@ vex::motor shivMotor    = vex::motor(vex::PORT17);
 
 // Three Wires
 vex::pot turretPos = vex::pot(Brain.ThreeWirePort.A);
+vex::digital_out frontGate = vex::digital_out(Brain.ThreeWirePort.B);
+vex::digital_out turretPiston = vex::digital_out(Brain.ThreeWirePort.C);
+// vex::controller
+MCEC::Controller controls = MCEC::Controller();
 
 #define TRACKING_WHEEL_RADIUS        1.625f // in inches
 #define TRACKING_WHEEL_CIRCUMFERENCE (2 * TRACKING_WHEEL_RADIUS * M_PI) // in inches
 
-#define IS_RED(color)  (0xFF0000 & (uint32_t)detectedColor) >> 16 == 0xff
-#define IS_BLUE(color) (0x0000FF & (uint32_t)detectedColor) == 0xff
 #define IS_NOT_MINE(color) IS_RED(color)
+#define MOTOR_TURRET true
 
 float xOff = 0, yOff = 0;
 float initialHeading = 0;
-bool intakeIn = false, intakeOut = false;
-
-bool xDown, yDown, aDown, bDown;
 
 bool isOpen = false, isIntake = false;
-
-
 
 enum TurretStates{LowGoal, Raising, HighGoal, Lowering};
 TurretStates turretState = TurretStates::LowGoal;
 
+void RaiseTurretMotor(){
+    turretDriver.spin(vex::reverse, 120, vex::rpm);
+}
+void RaiseTurretPnu(){
+    turretPiston.set(true);
+}
+
+void LowerTurretMotor(){
+    turretDriver.spin(vex::forward, 120, vex::rpm);
+}
+void LowerTurretPnu(){
+    turretPiston.set(false);
+}
+
+void LowerTurret(){
+  if(MOTOR_TURRET){
+    turretDriver.spin(vex::forward, 120, vex::rpm);
+  }else{
+    turretPiston.set(true);
+  }
+}
+bool yd = false;
 void TurretUpdate(){
     Brain.Screen.setCursor(1, 1);
     switch(turretState){
         case TurretStates::LowGoal:
-            if(xDown){
-                turretDriver.spin(vex::reverse, 120, vex::rpm);
+            if(controls.xDown && !yd){
+                RaiseTurretPnu();
+                turretState = TurretStates::HighGoal;
+                yd = true;
+            }else if(controls.yDown && false){
+                RaiseTurretMotor();
                 turretState = TurretStates::Raising;
-            }
+            }else if(!controls.xDown){
+              yd = false;
+            } 
             Brain.Screen.print("LowGoal   ");
             break;
         case TurretStates::Raising:
@@ -121,9 +144,15 @@ void TurretUpdate(){
             Brain.Screen.print("Raising   ");
             break;
         case TurretStates::HighGoal:
-            if(xDown){
-                turretDriver.spin(vex::forward, 120, vex::rpm);
+            if(controls.xDown && !yd){
+                LowerTurretPnu();
+                turretState = TurretStates::LowGoal;
+                yd = true;
+            }else if(controls.yDown && false){
+                LowerTurretMotor();
                 turretState = TurretStates::Lowering;
+            }else if(!controls.xDown){
+              yd = false;
             }
             Brain.Screen.print("HighGoal   ");
             break;
@@ -141,39 +170,18 @@ void TurretUpdate(){
 }
 
 void ColorDoorOpen(){
-    sorterDoor.spinToPosition(5, vex::degrees, 10, vex::rpm, false);
+    sorterDoor.spinToPosition(5, vex::degrees, 90, vex::rpm, false);
     // sorterDoor.spinFor(vex::reverse, 360, vex::deg);
     isOpen = true;
 }
 void ColorDoorClose(){
-    sorterDoor.spinToPosition(95, vex::degrees, 10, vex::rpm, false);
+    sorterDoor.spinToPosition(95, vex::degrees, 90, vex::rpm, false);
     // sorterDoor.spinFor(vex::forward, 360, vex::deg);
     isOpen = false;
 }
 
-bool ReadController(){
-    rStick.Set(
-        controller.Axis1.position(), 
-        controller.Axis2.position()
-    );
-    lStick.Set(
-        controller.Axis4.position(), 
-        controller.Axis3.position()
-    );
-
-    intakeIn  = controller.ButtonR2.pressing();
-    intakeOut = controller.ButtonL2.pressing();
-
-    xDown = controller.ButtonX.pressing();
-    yDown = controller.ButtonY.pressing();
-    bDown = controller.ButtonB.pressing();
-    aDown = controller.ButtonA.pressing();
-    
-    return (lStick.x != 0 || lStick.y != 0 || rStick.x != 0 || rStick.y != 0);
-}
-
 void ColorRead(){
-    if(!intakeIn){ 
+    if(!isIntake){ 
         ballOptical.setLight(vex::ledState::off);
         return;
     }
@@ -184,8 +192,6 @@ void ColorRead(){
     double brightness = ballOptical.brightness();
     vex::color detectedColor = ballOptical.color();
     bool isNear = ballOptical.isNearObject();
-
-
     
     Brain.Screen.setCursor(3, 1);
     Brain.Screen.print(hue);
@@ -203,39 +209,19 @@ void ColorRead(){
 
     if(isNear){
         if(IS_NOT_MINE(detectedColor)){
-            ColorDoorOpen();
+            // ColorDoorOpen();
             Brain.Screen.print("Not Mine");
         }else{
-            ColorDoorClose();
+            // ColorDoorClose();
             Brain.Screen.print("Mine    ");
         }
 
     }
 }
 
-void ReadPosition(){
-    // yOff += 
-    //     TRACKING_WHEEL_CIRCUMFERENCE * 
-    //     fbRot.position(vex::rotationUnits::rev) * 
-    //     std::sin((-inertial.yaw() + 90) * (M_PI / 180.0));
-    // xOff += 
-    //     TRACKING_WHEEL_CIRCUMFERENCE * 
-    //     fbRot.position(vex::rotationUnits::rev) * 
-    //     std::cos((-inertial.yaw() + 90) * (M_PI / 180.0));
-    // yOff += 
-    //     TRACKING_WHEEL_CIRCUMFERENCE * 
-    //     lrRot.position(vex::rotationUnits::rev) * 
-    //     std::sin((-inertial.yaw() + 180) * (M_PI / 180.0));
-    // xOff +=
-    //     TRACKING_WHEEL_CIRCUMFERENCE * 
-    //     lrRot.position(vex::rotationUnits::rev) * 
-    //     std::cos((-inertial.yaw() + 180) * (M_PI / 180.0));
 
-    // fbRot.resetPosition();
-    // lrRot.resetPosition();
-}
-
-void IntakeGo(){
+//@param gatePos: false = open, true = closed
+void IntakeGo(bool gatePos = false){
     intakeFront.spin(vex::forward, 300, vex::rpm);
     intakeBack.spin(vex::reverse, 300, vex::rpm);
     intakeMid.spin(vex::forward, 300, vex::rpm);
@@ -244,6 +230,8 @@ void IntakeGo(){
 
     
     sorterMotor.spin(vex::forward, 300, vex::rpm);
+
+    frontGate.set(gatePos);
 }
 
 void IntakeNotGo(){
@@ -262,48 +250,87 @@ void IntakeStop(){
     intakeMid.stop();
 
     turretRoller.stop();
-
     
     sorterMotor.stop();
 }
 
+void Store(){
+  IntakeGo(true);
+}
+
+void Shoot(){
+  IntakeGo(false);
+}
+
+void BackExit(){
+    intakeFront.spin(vex::forward, 300, vex::rpm);
+    intakeBack.spin(vex::reverse, 300, vex::rpm);
+    intakeMid.spin(vex::forward, 300, vex::rpm);
+
+    turretRoller.spin(vex::reverse, 300, vex::rpm);
+
+    sorterMotor.spin(vex::reverse, 300, vex::rpm);
+    ColorDoorOpen();
+}
+
+void FrontExit(){
+  IntakeNotGo();
+}
+
 void DriverLoop(){
-    if(!inertial.isCalibrating()){
-        if(ReadController()){
-            drivetrain.Drive(-lStick.y, lStick.x);
+    // if(!inertial.isCalibrating()){
+        controls.Set();
+        if(controls.lStick.isMoved() || controls.rStick.isMoved()){
+            drivetrain.Drive(-controls.lStick.y, (ABS(controls.rStick.x) > 30) ? controls.rStick.x : controls.lStick.x);
         }else{
             drivetrain.Stop();
         }
 
-
-        // if(aDown){
-        //     sorterMotor.spin(vex::forward, 300, vex::rpm);
-        // }else{
-        //     sorterMotor.stop();
-        // }
-
-        if(intakeIn && !intakeOut){ // Intake in
-            IntakeGo();
+        if(controls.r2Down){ // Intake in
+            Store();
             isIntake = true;
-        }else if(!intakeIn && intakeOut){ // Intake out
-            IntakeNotGo();
+        }else if(controls.l2Down){ // Intake out
+            FrontExit();
             isIntake = false;
-        }else{
+        }else if(controls.r1Down){
+            Shoot();
+            isIntake = false;
+        }else if(controls.l1Down){
+            BackExit();
+            isIntake = false;
+        }else if(!controls.r2Down && !controls.r1Down && !controls.l2Down && !controls.l1Down){
             IntakeStop();
             isIntake = false;
         }
 
-        // if(isIntake){
-        //     sorterDoor.spinToPosition(0);
-        // }
-
         ColorRead();
 
         TurretUpdate();
+    // }
+    // vex::this_thread::sleep_for(10);
+}
 
-        ReadPosition();
-    }
-    vex::this_thread::sleep_for(10);
+void Driver(){
+  controls.controller.rumble("...");
+
+  while(comp.isDriverControl()){
+    DriverLoop();
+  }
+}
+
+void Auton(){
+  
+  drivetrain.Spin(2.35);
+
+  drivetrain.Rotate(90);
+
+  drivetrain.Spin(2.35);
+
+  drivetrain.Rotate(270);
+
+  RaiseTurretPnu();
+  
+  Shoot();
 }
 
 int main(){
@@ -313,11 +340,6 @@ int main(){
     while(inertial.isCalibrating());
     inertial.setHeading(0, vex::deg);
     inertial.setRotation(0, vex::deg);
-    // controller.rumble("... -.. .. -.-- -... -");
-    controller.rumble("...");
-
-    // fbRot.resetPosition();
-    // lrRot.resetPosition();
 
     ballOptical.integrationTime(50);
     ballOptical.setLightPower(100, vex::percent);
@@ -325,7 +347,33 @@ int main(){
 
     sorterDoor.resetPosition();
 
+    drivetrain.SetInertial(&inertial);
+
+    controls.controller.rumble("...");
+
+    if(comp.isFieldControl()){
+      controls.controller.Screen.clearScreen();
+      controls.controller.Screen.print("dwadawd");
+      comp.drivercontrol(Driver);
+      comp.autonomous(Auton);
+    }
+
     while(1) {
-        DriverLoop();
+        if(!comp.isFieldControl()){
+            DriverLoop();
+
+            if(controls.downDown){
+              controls.controller.Screen.clearScreen();
+              controls.controller.Screen.setCursor(1, 1);
+              controls.controller.Screen.print("Running Auton");
+              Auton(); 
+              controls.controller.Screen.clearScreen();
+            }else{
+              controls.controller.Screen.clearScreen();
+              controls.controller.Screen.setCursor(1, 1);
+              controls.controller.Screen.print(controls.downDown);
+            }
+        }
+        vex::this_thread::sleep_for(10);
     }
 }

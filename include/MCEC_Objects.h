@@ -2,6 +2,12 @@
 #ifndef MCEC_Objects_h
 #define MCEC_Objects_h
 #include "vex.h"
+
+#define IS_RED(color)  (0xFF0000 & (uint32_t)detectedColor) >> 16 == 0xff
+#define IS_BLUE(color) (0x0000FF & (uint32_t)detectedColor) == 0xff
+
+#define ABS(num) ((num < 0) ? (num * -1) : num)
+
 namespace MCEC{
     
     class Drivetrain8{
@@ -20,10 +26,14 @@ namespace MCEC{
             void Drive(int joyX, int joyY);
             void ApplyPower(int lPow, int rPow);
             void Stop();
+            void Spin(float revs);
+            void Rotate(int);
+            void SetInertial(vex::inertial* _inertial);
             float curPowerR, curPowerL;
         private:
             vex::motor _mR1, _mR2, _mR3, _mR4;
             vex::motor _mL1, _mL2, _mL3, _mL4;
+            vex::inertial* inertial;
     };
     
     struct Joystick{
@@ -38,6 +48,20 @@ namespace MCEC{
         void SetY(int _y){
             y = _y;
         }
+
+        bool isMoved(){
+          return (x != 0 || y != 0);
+        }
+    };
+
+    struct Controller{
+      bool aDown, bDown, xDown, yDown;
+      bool r1Down, r2Down, l1Down, l2Down;
+      bool leftDown, rightDown, upDown, downDown;
+      Joystick lStick, rStick;
+      vex::controller controller;
+      Controller() : controller() {}
+      void Set();
     };
 
     float Lerp(float a, float b, float t);
