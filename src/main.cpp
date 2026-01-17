@@ -25,9 +25,9 @@
 /*--------------------
  | Brain 3-Wire Ports |
  |   A: Turret Pot    |
- |   B: Front Gate    |
- |   C: None          |
- |   D: None          |
+ |   B: Shiv Uppies   |
+ |   C: Turret Up     |
+ |   D: Front Gate    |
  |   E: None          |
  |   F: None          |
  |   G: None          |
@@ -43,8 +43,8 @@
 |                                                                |
 | Ls3: F/B                               Rs2: L/R                |
 | Ls4: None                              Rs1: None               |
-|       Up: None                 X:None                          |
-| Left: None  Right: None    Y:None   A:Sort Wheel Go            |
+|       Up: None                 X: Turret                       |
+| Left: None  Right: None    Y:None   A: Sort Wheel Go           |
 |       Down: None               B:None                          |
 ----------------------------------------------------------------*/
 
@@ -81,6 +81,7 @@ vex::motor shivMotor    = vex::motor(vex::PORT17);
 vex::pot turretPos = vex::pot(Brain.ThreeWirePort.A);
 vex::digital_out frontGate = vex::digital_out(Brain.ThreeWirePort.B);
 vex::digital_out turretPiston = vex::digital_out(Brain.ThreeWirePort.C);
+vex::digital_out shivPiston = vex::digital_out(Brain.ThreeWirePort.D);
 // vex::controller
 MCEC::Controller controls = MCEC::Controller();
 
@@ -98,16 +99,10 @@ bool isOpen = false, isIntake = false;
 enum TurretStates{LowGoal, Raising, HighGoal, Lowering};
 TurretStates turretState = TurretStates::LowGoal;
 
-void RaiseTurretMotor(){
-    turretDriver.spin(vex::reverse, 120, vex::rpm);
-}
 void RaiseTurretPnu(){
     turretPiston.set(true);
 }
 
-void LowerTurretMotor(){
-    turretDriver.spin(vex::forward, 120, vex::rpm);
-}
 void LowerTurretPnu(){
     turretPiston.set(false);
 }
@@ -119,20 +114,19 @@ void LowerTurret(){
     turretPiston.set(true);
   }
 }
-bool yd = false;
+bool xd = false;
 void TurretUpdate(){
     Brain.Screen.setCursor(1, 1);
     switch(turretState){
         case TurretStates::LowGoal:
-            if(controls.xDown && !yd){
+            if(controls.xDown && !xd){
                 RaiseTurretPnu();
                 turretState = TurretStates::HighGoal;
-                yd = true;
+                xd = true;
             }else if(controls.yDown && false){
-                RaiseTurretMotor();
-                turretState = TurretStates::Raising;
+                
             }else if(!controls.xDown){
-              yd = false;
+              xd = false;
             } 
             Brain.Screen.print("LowGoal   ");
             break;
@@ -144,15 +138,14 @@ void TurretUpdate(){
             Brain.Screen.print("Raising   ");
             break;
         case TurretStates::HighGoal:
-            if(controls.xDown && !yd){
+            if(controls.xDown && !xd){
                 LowerTurretPnu();
                 turretState = TurretStates::LowGoal;
-                yd = true;
+                xd = true;
             }else if(controls.yDown && false){
-                LowerTurretMotor();
-                turretState = TurretStates::Lowering;
+                
             }else if(!controls.xDown){
-              yd = false;
+              xd = false;
             }
             Brain.Screen.print("HighGoal   ");
             break;
@@ -319,7 +312,6 @@ void Driver(){
 }
 
 void Auton(){
-  
   drivetrain.Spin(2.35);
 
   drivetrain.Rotate(90);

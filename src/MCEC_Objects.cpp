@@ -1,16 +1,37 @@
 #include "MCEC_Objects.h"
 
-float MCEC::Lerp(float a, float b, float t){
+using namespace MCEC;
+float Lerp(float a, float b, float t){
     return ((1 - t) * a) + (b * t);
 }
 
-void MCEC::Drivetrain8::SetInertial(vex::inertial* _inertial){
+void Drivetrain8::SetInertial(vex::inertial* _inertial){
   inertial = _inertial;
+}
+
+void DriveTrain8::UpdateHeading(){
+    static const float wheelDist = (14.5f + 9) / 2;
+    static int16_t lastR, lastL;
+    int16_t curR, curL;
+
+    curR = (
+        _mR1.position(vex::degrees) + 
+        _mR2.position(vex::degrees) + 
+        _mR3.position(vex::degrees) + 
+        _mR4.position(vex::degrees)) / 4;
+    curR = (
+        _mL1.position(vex::degrees) + 
+        _mL2.position(vex::degrees) + 
+        _mL3.position(vex::degrees) + 
+        _mL4.position(vex::degrees)) / 4;
+
+    
+
 }
 
 // @param joyX: input from -100 to 100
 // @param joyY: input from -100 to 100
-void MCEC::Drivetrain8::Drive(int joyX, int joyY){
+void Drivetrain8::Drive(int joyX, int joyY){
     // Ensure the joystick inputs are within the valid range
     if(abs(joyX) > 100 || abs(joyY) > 100){
         return;
@@ -43,9 +64,9 @@ void MCEC::Drivetrain8::Drive(int joyX, int joyY){
     ApplyPower(Lpower, Rpower);
 }
 
-void MCEC::Drivetrain8::ApplyPower(int lPow, int rPow){
-    curPowerL = MCEC::Lerp(curPowerL, lPow, 0.1f);
-    curPowerR = MCEC::Lerp(curPowerR, rPow, 0.05f);
+void Drivetrain8::ApplyPower(int lPow, int rPow){
+    curPowerL = Lerp(curPowerL, lPow, 0.1f);
+    curPowerR = Lerp(curPowerR, rPow, 0.05f);
 
     _mR1.spin(vex::forward, curPowerR, vex::rpm);
     _mR2.spin(vex::forward, curPowerR, vex::rpm);
@@ -59,7 +80,7 @@ void MCEC::Drivetrain8::ApplyPower(int lPow, int rPow){
 }
 
 
-void MCEC::Drivetrain8::Stop(){
+void Drivetrain8::Stop(){
     curPowerL = 0;
     curPowerR = 0;
 
@@ -74,13 +95,13 @@ void MCEC::Drivetrain8::Stop(){
     _mL4.stop(vex::brakeType::brake);
 }
 
-void MCEC::Drivetrain8::Rotate(int deg){
+void Drivetrain8::Rotate(int deg){
   while(inertial->heading() < deg){
     Drive(0, 30);
   }
 }
 
-void MCEC::Drivetrain8::Spin(float revs){
+void Drivetrain8::Spin(float revs){
   _mR1.spinTo(revs, vex::rotationUnits::rev, false);
   _mR2.spinTo(revs, vex::rotationUnits::rev, false);
   _mR3.spinTo(revs, vex::rotationUnits::rev, false);
@@ -92,7 +113,11 @@ void MCEC::Drivetrain8::Spin(float revs){
   _mL4.spinTo(revs, vex::rotationUnits::rev, true);
 }
 
-void MCEC::Controller::Set(){
+void DriveTrain8::DriveDist(int dL, int dR){
+
+}
+
+void Controller::Set(){
     rStick.Set(
         controller.Axis1.position(), 
         controller.Axis2.position()
@@ -116,4 +141,16 @@ void MCEC::Controller::Set(){
     rightDown = controller.ButtonRight.pressing();
     downDown = controller.ButtonDown.pressing();
     upDown = controller.ButtonUp.pressing();
+}
+
+
+void Button::Set(bool newValue){
+    if(newValue != _value){
+        if(_onPress && newValue){
+            _onPress();
+        }else if(_onRelease && !newValue){
+            _onRelease();
+        }
+    }
+    _value = newValue;
 }
