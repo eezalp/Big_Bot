@@ -1,17 +1,18 @@
 #include "MCEC_Objects.h"
 
-using namespace MCEC;
-float Lerp(float a, float b, float t){
+float MCEC::Lerp(float a, float b, float t){
     return ((1 - t) * a) + (b * t);
 }
+namespace MCEC{
 
 void Drivetrain8::SetInertial(vex::inertial* _inertial){
   inertial = _inertial;
 }
 
-void DriveTrain8::UpdateHeading(){
+void Drivetrain8::UpdateHeading(){
     static const float wheelDist = (14.5f + 9) / 2;
-    static int16_t lastR, lastL;
+    static const float wheelCirc = 2 * 1.625f * M_PI;
+    static int16_t lastR, lastL, lastIH;
     int16_t curR, curL;
 
     curR = (
@@ -26,7 +27,11 @@ void DriveTrain8::UpdateHeading(){
         _mL4.position(vex::degrees)) / 4;
 
     
+    _heading += (inertial->heading() - lastIH);// * 0.8f + (wheelCirc * (curR - curL) / wheelDist) * 0.2f;
 
+    lastIH = inertial->heading();
+    lastR = curR;
+    lastL = curL;
 }
 
 // @param joyX: input from -100 to 100
@@ -113,7 +118,7 @@ void Drivetrain8::Spin(float revs){
   _mL4.spinTo(revs, vex::rotationUnits::rev, true);
 }
 
-void DriveTrain8::DriveDist(int dL, int dR){
+void Drivetrain8::DriveDist(int dL, int dR){
 
 }
 
@@ -127,20 +132,20 @@ void Controller::Set(){
         controller.Axis3.position()
     );
 
-    r1Down = controller.ButtonR1.pressing();
-    l1Down = controller.ButtonL1.pressing();
-    r2Down = controller.ButtonR2.pressing();
-    l2Down = controller.ButtonL2.pressing();
+    R1.Set(controller.ButtonR1.pressing());
+    L1.Set(controller.ButtonL1.pressing());
+    R2.Set(controller.ButtonR2.pressing());
+    L2.Set(controller.ButtonL2.pressing());
 
-    xDown = controller.ButtonX.pressing();
-    yDown = controller.ButtonY.pressing();
-    bDown = controller.ButtonB.pressing();
-    aDown = controller.ButtonA.pressing();
+    X.Set(controller.ButtonX.pressing());
+    Y.Set(controller.ButtonY.pressing());
+    B.Set(controller.ButtonB.pressing());
+    A.Set(controller.ButtonA.pressing());
 
-    leftDown = controller.ButtonLeft.pressing();
-    rightDown = controller.ButtonRight.pressing();
-    downDown = controller.ButtonDown.pressing();
-    upDown = controller.ButtonUp.pressing();
+    Left.Set(controller.ButtonLeft.pressing());
+    Right.Set(controller.ButtonRight.pressing());
+    Down.Set(controller.ButtonDown.pressing());
+    Up.Set(controller.ButtonUp.pressing());
 }
 
 
@@ -153,4 +158,6 @@ void Button::Set(bool newValue){
         }
     }
     _value = newValue;
+}
+
 }

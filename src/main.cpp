@@ -67,21 +67,21 @@ MCEC::Drivetrain8 drivetrain(
 );
 
 // Motors
-vex::motor intakeMid    = vex::motor(vex::PORT12);
-vex::motor intakeFront  = vex::motor(vex::PORT10);
-vex::motor intakeBack   = vex::motor(vex::PORT11);
-vex::motor sorterMotor  = vex::motor(vex::PORT13);
-vex::motor sorterDoor   = vex::motor(vex::PORT14);
-vex::motor turretDriver = vex::motor(vex::PORT15);
-vex::motor turretRoller = vex::motor(vex::PORT16);
-vex::motor shivMotor    = vex::motor(vex::PORT17);
+    vex::motor intakeMid    = vex::motor(vex::PORT12);
+    vex::motor intakeFront  = vex::motor(vex::PORT10);
+    vex::motor intakeBack   = vex::motor(vex::PORT11);
+    vex::motor sorterMotor  = vex::motor(vex::PORT13);
+    vex::motor sorterDoor   = vex::motor(vex::PORT14);
+    vex::motor turretDriver = vex::motor(vex::PORT15);
+    vex::motor turretRoller = vex::motor(vex::PORT16);
+    vex::motor shivMotor    = vex::motor(vex::PORT17);
 
 
 // Three Wires
-vex::pot turretPos = vex::pot(Brain.ThreeWirePort.A);
-vex::digital_out frontGate = vex::digital_out(Brain.ThreeWirePort.B);
-vex::digital_out turretPiston = vex::digital_out(Brain.ThreeWirePort.C);
-vex::digital_out shivPiston = vex::digital_out(Brain.ThreeWirePort.D);
+    vex::pot turretPos = vex::pot(Brain.ThreeWirePort.A);
+    vex::digital_out frontGate = vex::digital_out(Brain.ThreeWirePort.B);
+    vex::digital_out turretPiston = vex::digital_out(Brain.ThreeWirePort.C);
+    vex::digital_out shivPiston = vex::digital_out(Brain.ThreeWirePort.D);
 // vex::controller
 MCEC::Controller controls = MCEC::Controller();
 
@@ -89,7 +89,7 @@ MCEC::Controller controls = MCEC::Controller();
 #define TRACKING_WHEEL_CIRCUMFERENCE (2 * TRACKING_WHEEL_RADIUS * M_PI) // in inches
 
 #define IS_NOT_MINE(color) IS_RED(color)
-#define MOTOR_TURRET true
+#define MOTOR_TURRET false
 
 float xOff = 0, yOff = 0;
 float initialHeading = 0;
@@ -99,12 +99,16 @@ bool isOpen = false, isIntake = false;
 enum TurretStates{LowGoal, Raising, HighGoal, Lowering};
 TurretStates turretState = TurretStates::LowGoal;
 
+void LowerTurretPnu();
+
 void RaiseTurretPnu(){
     turretPiston.set(true);
+    controls.X.SetOnPress(LowerTurretPnu);
 }
 
 void LowerTurretPnu(){
     turretPiston.set(false);
+    controls.X.SetOnPress(RaiseTurretPnu);
 }
 
 void LowerTurret(){
@@ -114,53 +118,53 @@ void LowerTurret(){
     turretPiston.set(true);
   }
 }
-bool xd = false;
-void TurretUpdate(){
-    Brain.Screen.setCursor(1, 1);
-    switch(turretState){
-        case TurretStates::LowGoal:
-            if(controls.xDown && !xd){
-                RaiseTurretPnu();
-                turretState = TurretStates::HighGoal;
-                xd = true;
-            }else if(controls.yDown && false){
+// bool xd = false;
+// void TurretUpdate(){
+//     Brain.Screen.setCursor(1, 1);
+//     switch(turretState){
+//         case TurretStates::LowGoal:
+//             if(controls.xDown && !xd){
+//                 RaiseTurretPnu();
+//                 turretState = TurretStates::HighGoal;
+//                 xd = true;
+//             }else if(controls.yDown && false){
                 
-            }else if(!controls.xDown){
-              xd = false;
-            } 
-            Brain.Screen.print("LowGoal   ");
-            break;
-        case TurretStates::Raising:
-            if(turretPos.angle(vex::percent) >= TURRET_MAX_ANGLE){
-                turretDriver.stop(vex::brakeType::brake);
-                turretState = TurretStates::HighGoal;
-            }
-            Brain.Screen.print("Raising   ");
-            break;
-        case TurretStates::HighGoal:
-            if(controls.xDown && !xd){
-                LowerTurretPnu();
-                turretState = TurretStates::LowGoal;
-                xd = true;
-            }else if(controls.yDown && false){
+//             }else if(!controls.xDown){
+//               xd = false;
+//             } 
+//             Brain.Screen.print("LowGoal   ");
+//             break;
+//         case TurretStates::Raising:
+//             if(turretPos.angle(vex::percent) >= TURRET_MAX_ANGLE){
+//                 turretDriver.stop(vex::brakeType::brake);
+//                 turretState = TurretStates::HighGoal;
+//             }
+//             Brain.Screen.print("Raising   ");
+//             break;
+//         case TurretStates::HighGoal:
+//             if(controls.xDown && !xd){
+//                 LowerTurretPnu();
+//                 turretState = TurretStates::LowGoal;
+//                 xd = true;
+//             }else if(controls.yDown && false){
                 
-            }else if(!controls.xDown){
-              xd = false;
-            }
-            Brain.Screen.print("HighGoal   ");
-            break;
-        case TurretStates::Lowering:
-            if(turretPos.angle(vex::percent) <= TURRET_MIN_ANGLE){
-                turretDriver.stop(vex::brakeType::hold);
-                turretState = TurretStates::LowGoal;
-            }
-            Brain.Screen.print("Lowering   ");
-            break;
-    }
-    Brain.Screen.setCursor(2, 1);
-    Brain.Screen.print(turretPos.angle(vex::percent));
-    Brain.Screen.print("     ");
-}
+//             }else if(!controls.xDown){
+//               xd = false;
+//             }
+//             Brain.Screen.print("HighGoal   ");
+//             break;
+//         case TurretStates::Lowering:
+//             if(turretPos.angle(vex::percent) <= TURRET_MIN_ANGLE){
+//                 turretDriver.stop(vex::brakeType::hold);
+//                 turretState = TurretStates::LowGoal;
+//             }
+//             Brain.Screen.print("Lowering   ");
+//             break;
+//     }
+//     Brain.Screen.setCursor(2, 1);
+//     Brain.Screen.print(turretPos.angle(vex::percent));
+//     Brain.Screen.print("     ");
+// }
 
 void ColorDoorOpen(){
     sorterDoor.spinToPosition(5, vex::degrees, 90, vex::rpm, false);
@@ -279,26 +283,30 @@ void DriverLoop(){
             drivetrain.Stop();
         }
 
-        if(controls.r2Down){ // Intake in
-            Store();
-            isIntake = true;
-        }else if(controls.l2Down){ // Intake out
-            FrontExit();
-            isIntake = false;
-        }else if(controls.r1Down){
-            Shoot();
-            isIntake = false;
-        }else if(controls.l1Down){
-            BackExit();
-            isIntake = false;
-        }else if(!controls.r2Down && !controls.r1Down && !controls.l2Down && !controls.l1Down){
-            IntakeStop();
-            isIntake = false;
-        }
+        // if(controls.r2Down){ // Intake in
+        //     Store();
+        //     isIntake = true;
+        // }else if(controls.l2Down){ // Intake out
+        //     FrontExit();
+        //     isIntake = false;
+        // }else if(controls.r1Down){
+        //     Shoot();
+        //     isIntake = false;
+        // }else if(controls.l1Down){
+        //     BackExit();
+        //     isIntake = false;
+        // }else if(!controls.r2Down && !controls.r1Down && !controls.l2Down && !controls.l1Down){
+        //     IntakeStop();
+        //     isIntake = false;
+        // }
 
         ColorRead();
+        drivetrain.UpdateHeading();
+        Brain.Screen.setCursor(8, 1);
+        Brain.Screen.print("%f", drivetrain._heading);
+        Brain.Screen.print("       ");
 
-        TurretUpdate();
+        // TurretUpdate();
     // }
     // vex::this_thread::sleep_for(10);
 }
@@ -325,6 +333,24 @@ void Auton(){
   Shoot();
 }
 
+void SetControls(){
+    controls.X.SetOnPress(LowerTurretPnu);
+
+    controls.R1.SetOnPress(Shoot);
+    controls.R2.SetOnPress(Store);
+    controls.L1.SetOnPress(BackExit);
+    controls.L2.SetOnPress(FrontExit);
+    
+    controls.R1.SetOnRelease(IntakeStop);
+    controls.R2.SetOnRelease(IntakeStop);
+    controls.L1.SetOnRelease(IntakeStop);
+    controls.L2.SetOnRelease(IntakeStop);
+
+    if(!comp.isFieldControl()){
+        controls.Down.SetOnPress(Auton);
+    }
+}
+
 int main(){
     inertial.calibrate(3);
 
@@ -341,6 +367,7 @@ int main(){
 
     drivetrain.SetInertial(&inertial);
 
+
     controls.controller.rumble("...");
 
     if(comp.isFieldControl()){
@@ -353,18 +380,6 @@ int main(){
     while(1) {
         if(!comp.isFieldControl()){
             DriverLoop();
-
-            if(controls.downDown){
-              controls.controller.Screen.clearScreen();
-              controls.controller.Screen.setCursor(1, 1);
-              controls.controller.Screen.print("Running Auton");
-              Auton(); 
-              controls.controller.Screen.clearScreen();
-            }else{
-              controls.controller.Screen.clearScreen();
-              controls.controller.Screen.setCursor(1, 1);
-              controls.controller.Screen.print(controls.downDown);
-            }
         }
         vex::this_thread::sleep_for(10);
     }

@@ -3,12 +3,14 @@
 #define MCEC_Objects_h
 #include "vex.h"
 
-#include <functions.h>
+#include <functional>
 
 #define IS_RED(color)  (0xFF0000 & (uint32_t)detectedColor) >> 16 == 0xff
 #define IS_BLUE(color) (0x0000FF & (uint32_t)detectedColor) == 0xff
 
 #define ABS(num) ((num < 0) ? (num * -1) : num)
+
+typedef std::function<void()> ButtonCB;
 
 namespace MCEC{
     
@@ -33,7 +35,7 @@ namespace MCEC{
             void Spin(float revs);
             void Rotate(int);
             void SetInertial(vex::inertial* _inertial);
-            float curPowerR, curPowerL;
+            float curPowerR, curPowerL, _heading;
         private:
             vex::motor _mR1, _mR2, _mR3, _mR4;
             vex::motor _mL1, _mL2, _mL3, _mL4;
@@ -60,23 +62,30 @@ namespace MCEC{
 
     class Button{
         public:
-            void SetValue(bool);
-            void SetOnPress(std::function<void()>);
-            void SetOnRelease(std::function<void()>);
+            void Set(bool);
+            void SetOnPress(ButtonCB _op){
+                _onPress = _op;
+            }
+            void SetOnRelease(ButtonCB _or){
+                _onRelease = _or;
+            }
         private:
-            bool _last, _cur;
-            std::function<void()> _onPress, _onRelease;
+            bool _value;
+            ButtonCB _onPress, _onRelease;
     };
 
     class Controller{
-      bool aDown, bDown, xDown, yDown;
-      bool r1Down, r2Down, l1Down, l2Down;
-      bool leftDown, rightDown, upDown, downDown;
+      public:
+        Button 
+            A, B, X, Y, 
+            L1, L2, R1, R2, 
+            LS, RS, 
+            Up, Down, Left, Right;
 
-      Joystick lStick, rStick;
-      vex::controller controller;
-      Controller() : controller() {}
-      void Set();
+        Joystick lStick, rStick;
+        vex::controller controller;
+        Controller() : controller() {}
+        void Set();
     };
 
     float Lerp(float a, float b, float t);
