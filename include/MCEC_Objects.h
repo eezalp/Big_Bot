@@ -34,8 +34,11 @@ namespace MCEC{
             void UpdateHeading();
             void Spin(float revs);
             void Rotate(int);
+            int ReadLeft();
+            int ReadRight();
             void SetInertial(vex::inertial* _inertial);
             float curPowerR, curPowerL, _heading;
+            int Lpower, Rpower;
         private:
             vex::motor _mR1, _mR2, _mR3, _mR4;
             vex::motor _mL1, _mL2, _mL3, _mL4;

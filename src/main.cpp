@@ -201,6 +201,7 @@ void ColorRead(){
     Brain.Screen.setCursor(5, 1);
     Brain.Screen.print("%X", detectedColor.rgb());
     Brain.Screen.print("       ");
+    
 
     Brain.Screen.setCursor(6, 1);
 
@@ -306,6 +307,10 @@ void DriverLoop(){
         Brain.Screen.print("%f", drivetrain._heading);
         Brain.Screen.print("       ");
 
+        Brain.Screen.setCursor(9, 1);
+        Brain.Screen.print("(%d, %d)", drivetrain.ReadRight(), drivetrain.ReadLeft());
+        Brain.Screen.print("       ");
+
         // TurretUpdate();
     // }
     // vex::this_thread::sleep_for(10);
@@ -367,6 +372,7 @@ int main(){
 
     drivetrain.SetInertial(&inertial);
 
+    SetControls();
 
     controls.controller.rumble("...");
 

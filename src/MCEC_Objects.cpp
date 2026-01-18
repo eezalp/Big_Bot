@@ -1,4 +1,5 @@
 #include "MCEC_Objects.h"
+#include "Vex.h"
 
 float MCEC::Lerp(float a, float b, float t){
     return ((1 - t) * a) + (b * t);
@@ -9,22 +10,32 @@ void Drivetrain8::SetInertial(vex::inertial* _inertial){
   inertial = _inertial;
 }
 
+int Drivetrain8::ReadLeft(){
+    return (
+        _mL1.position(vex::degrees) + 
+        _mL2.position(vex::degrees) + 
+        _mL3.position(vex::degrees) + 
+        _mL4.position(vex::degrees)
+    ) / 4;
+}
+
+int Drivetrain8::ReadRight(){
+    return (
+        _mL1.position(vex::degrees) + 
+        _mL2.position(vex::degrees) + 
+        _mL3.position(vex::degrees) + 
+        _mL4.position(vex::degrees)
+    ) / 4;
+}
+
 void Drivetrain8::UpdateHeading(){
     static const float wheelDist = (14.5f + 9) / 2;
     static const float wheelCirc = 2 * 1.625f * M_PI;
     static int16_t lastR, lastL, lastIH;
     int16_t curR, curL;
 
-    curR = (
-        _mR1.position(vex::degrees) + 
-        _mR2.position(vex::degrees) + 
-        _mR3.position(vex::degrees) + 
-        _mR4.position(vex::degrees)) / 4;
-    curR = (
-        _mL1.position(vex::degrees) + 
-        _mL2.position(vex::degrees) + 
-        _mL3.position(vex::degrees) + 
-        _mL4.position(vex::degrees)) / 4;
+    curR = ReadLeft();
+    curR = ReadRight();
 
     
     _heading += (inertial->heading() - lastIH);// * 0.8f + (wheelCirc * (curR - curL) / wheelDist) * 0.2f;
@@ -62,8 +73,8 @@ void Drivetrain8::Drive(int joyX, int joyY){
     float xPower = (joyX * 6 * px * tpx);
     float yPower = (joyY * 6 * py * tpy);
 
-    int Lpower = (xPower + yPower);
-    int Rpower = (xPower - yPower);
+    Lpower = (xPower + yPower);
+    Rpower = (xPower - yPower);
 
     // Apply the power to the motors
     ApplyPower(Lpower, Rpower);
@@ -71,7 +82,7 @@ void Drivetrain8::Drive(int joyX, int joyY){
 
 void Drivetrain8::ApplyPower(int lPow, int rPow){
     curPowerL = Lerp(curPowerL, lPow, 0.1f);
-    curPowerR = Lerp(curPowerR, rPow, 0.05f);
+    curPowerR = Lerp(curPowerR, rPow, 0.1f);
 
     _mR1.spin(vex::forward, curPowerR, vex::rpm);
     _mR2.spin(vex::forward, curPowerR, vex::rpm);
