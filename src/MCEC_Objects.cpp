@@ -1,9 +1,4 @@
 #include "MCEC_Objects.h"
-#include "Vex.h"
-
-static const float wheelRad = 1.625f;
-static const float wheelDist = (14.5f + 9) / 2;
-static const float wheelCirc = 2 * wheelRad * M_PI;
 
 float MCEC::Lerp(float a, float b, float t){
     return ((1 - t) * a) + (b * t);
@@ -14,7 +9,7 @@ void Drivetrain8::SetInertial(vex::inertial* _inertial){
   inertial = _inertial;
 }
 
-int Drivetrain8::ReadLeft(){
+float Drivetrain8::ReadLeft(){
     return (
         _mL1.position(vex::degrees) + 
         _mL2.position(vex::degrees) + 
@@ -23,29 +18,13 @@ int Drivetrain8::ReadLeft(){
     ) / 4;
 }
 
-int Drivetrain8::ReadRight(){
+float Drivetrain8::ReadRight(){
     return (
         _mL1.position(vex::degrees) + 
         _mL2.position(vex::degrees) + 
         _mL3.position(vex::degrees) + 
         _mL4.position(vex::degrees)
     ) / 4;
-}
-
-void Drivetrain8::UpdateHeading(){
-    static float headingMotor = 0;
-    static int16_t lastR, lastL;
-    int16_t curR, curL;
-
-    curR = ReadLeft();
-    curR = ReadRight();
-
-    headingMotor += (wheelCirc * (curR - curL) / wheelDist);
-    
-    _heading += inertial->heading() * 0.8f + headingMotor * 0.2f;
-
-    lastR = curR;
-    lastL = curL;
 }
 
 // @param joyX: input from -100 to 100
@@ -114,18 +93,20 @@ void Drivetrain8::Stop(){
     _mL4.stop(vex::brakeType::brake);
 }
 
-void Drivetrain8::Rotate(int deg){
-  Drive(-30, 30);
-  while(_heading < deg){
-    UpdateHeading();
-  }
-}
-
 void Drivetrain8::Spin(float revs){
-  _mR1.spinTo(revs, vex::rotationUnits::rev, false);
-  _mR2.spinTo(revs, vex::rotationUnits::rev, false);
-  _mR3.spinTo(revs, vex::rotationUnits::rev, false);
-  _mR4.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR1.resetPosition();
+  _mR2.resetPosition();
+  _mR3.resetPosition();
+  _mR4.resetPosition();
+  _mL1.resetPosition();
+  _mL2.resetPosition();
+  _mL3.resetPosition();
+  _mL4.resetPosition();
+
+  _mR1.spinTo(-revs, vex::rotationUnits::rev, false);
+  _mR2.spinTo(-revs, vex::rotationUnits::rev, false);
+  _mR3.spinTo(-revs, vex::rotationUnits::rev, false);
+  _mR4.spinTo(-revs, vex::rotationUnits::rev, false);
 
   _mL1.spinTo(revs, vex::rotationUnits::rev, false);
   _mL2.spinTo(revs, vex::rotationUnits::rev, false);
@@ -134,29 +115,41 @@ void Drivetrain8::Spin(float revs){
 }
 
 void Drivetrain8::SpinR(float revs){
-  _mR1.spinTo(revs, vex::rotationUnits::rev, false);
-  _mR2.spinTo(revs, vex::rotationUnits::rev, false);
-  _mR3.spinTo(revs, vex::rotationUnits::rev, false);
-  _mR4.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR1.spin(vex::forward, revs, vex::rpm);
+  _mR2.spin(vex::forward, revs, vex::rpm);
+  _mR3.spin(vex::forward, revs, vex::rpm);
+  _mR4.spin(vex::forward, revs, vex::rpm);
 }
 void Drivetrain8::SpinL(float revs){
-  _mL1.spinTo(revs, vex::rotationUnits::rev, false);
-  _mL2.spinTo(revs, vex::rotationUnits::rev, false);
-  _mL3.spinTo(revs, vex::rotationUnits::rev, false);
-  _mL4.spinTo(revs, vex::rotationUnits::rev, false);
+  _mL1.spin(vex::reverse, revs, vex::rpm);
+  _mL2.spin(vex::reverse, revs, vex::rpm);
+  _mL3.spin(vex::reverse, revs, vex::rpm);
+  _mL4.spin(vex::reverse, revs, vex::rpm);
+}
+
+void Drivetrain8::SetSpeed(float speed, vex::percentUnits units){
+    _mR1.setVelocity(speed, units);
+    _mR2.setVelocity(speed, units);
+    _mR3.setVelocity(speed, units);
+    _mR4.setVelocity(speed, units);
+
+    _mL1.setVelocity(speed, units);
+    _mL2.setVelocity(speed, units);
+    _mL3.setVelocity(speed, units);
+    _mL4.setVelocity(speed, units);
 }
 
 void Drivetrain8::DriveDist(float dL, float dR, int sec){
     float 
-        lSpeed = dL / sec / wheelCirc, 
-        rSpeed = dR / sec / wheelCirc;
+        lSpeed = dL / sec / 60 / wheelCirc, 
+        rSpeed = dR / sec / 60 / wheelCirc;
     int rStart = ReadRight();
     int lStart = ReadLeft();
 
     SpinR(rSpeed);
     SpinL(lSpeed);
 
-    while(ReadRight() <= rSpeed != ReadLeft() <= lSpeed) { }
+    while(ReadRight() <= rSpeed || ReadLeft() <= lSpeed) { }
 }
 
 void Controller::Set(){

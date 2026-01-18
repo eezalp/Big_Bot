@@ -54,12 +54,105 @@
 #define TURRET_MAX_ANGLE 23
 #define TURRET_MIN_ANGLE 11
 
-vex::brain Brain;
 vex::inertial inertial = vex::inertial(vex::PORT9);
 vex::competition comp;
+vex::brain Brain;
 
 vex::optical ballOptical = vex::optical(vex::PORT18);
 
+
+
+void MCEC::Drivetrain8::UpdateHeading(){
+    static float headingMotor = 0;
+    static int16_t lastR, lastL;
+    int16_t curR, curL;
+
+    curR = ReadLeft();
+    curR = ReadRight();
+
+    headingMotor += (wheelCirc * ((curR - lastR) - (curL - lastL)) / wheelDist);
+    
+    _heading = inertial->heading();// * 0.8f + headingMotor * 0.2f;
+
+
+    lastR = curR;
+    lastL = curL;
+}
+
+
+void MCEC::Drivetrain8::Rotate(int deg, bool cw){
+    float initialHeading = _heading;
+    float target = (deg + initialHeading > 360) ? (deg + initialHeading - 360) : (deg + initialHeading < 0) ? (deg + initialHeading + 360) : (deg + initialHeading);
+  
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("%f", initialHeading);
+    Brain.Screen.print("       ");
+    Brain.Screen.setCursor(9, 1);
+    Brain.Screen.print("%f", target);
+    Brain.Screen.print("       ");
+
+    if(_heading > target){
+        Brain.Screen.setCursor(8, 1);
+        Brain.Screen.print("Greater");
+        Drive(0, 100);
+        while(_heading > target){
+            Brain.Screen.setCursor(8, 1);
+            Brain.Screen.print("%f", _heading);
+            Brain.Screen.print("       ");
+            UpdateHeading();
+        }
+    }else if(_heading < target) {
+        Brain.Screen.setCursor(8, 1);
+        Brain.Screen.print("Less");
+        Drive(0, -100);
+        while(_heading < target){
+            Brain.Screen.setCursor(8, 1);
+            Brain.Screen.print("%f", _heading);
+            Brain.Screen.print("       ");
+            UpdateHeading();
+        }
+    }
+
+}
+
+
+void MCEC::Drivetrain8::Rotate2(float targ){
+    float tVal = (targ / 2) * wheelDist;
+    float rInit = ReadRight(), lInit = ReadLeft();
+
+    SpinR((targ < 0) ? -60 : 60);
+    SpinL((targ < 0) ? 60 : -60);
+
+    Brain.Screen.setCursor(4, 1);
+    Brain.Screen.print("%f", rInit);
+    Brain.Screen.print("       ");
+    Brain.Screen.setCursor(5, 1);
+    Brain.Screen.print("%f", lInit);
+    Brain.Screen.print("       ");
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("%f", tVal);
+    Brain.Screen.print("       ");
+
+    while(abs(ReadRight() - rInit) < abs(tVal) || abs(ReadLeft() - lInit) < abs(tVal)){
+        Brain.Screen.setCursor(6, 1);
+        Brain.Screen.print("%f", ReadRight() - rInit);
+        Brain.Screen.print("       ");
+        Brain.Screen.setCursor(7, 1);
+        Brain.Screen.print("%f", ReadLeft() - lInit);
+        Brain.Screen.print("       ");
+    }
+    Brain.Screen.setCursor(6, 1);
+    Brain.Screen.print("%f", ReadRight() - rInit);
+    Brain.Screen.print("       ");
+    Brain.Screen.setCursor(7, 1);
+    Brain.Screen.print("%f", ReadLeft() - lInit);
+    Brain.Screen.print("       ");
+    Brain.Screen.setCursor(8, 1);
+    Brain.Screen.print("%f", tVal);
+    Brain.Screen.print("       ");
+
+    Stop();
+}
 
 MCEC::Drivetrain8 drivetrain(
     vex::PORT1, vex::PORT2, vex::PORT3, vex::PORT4, 
@@ -103,7 +196,7 @@ void LowerTurretPnu();
 void ShivUp();
 
 void RaiseTurretPnu(){
-    turretPiston.set(true);
+    turretPiston.set(false);
     controls.X.SetOnPress(LowerTurretPnu);
 }
 
@@ -118,7 +211,7 @@ void ShivUp(){
 }
 
 void LowerTurretPnu(){
-    turretPiston.set(false);
+    turretPiston.set(true);
     controls.X.SetOnPress(RaiseTurretPnu);
 }
 
@@ -259,9 +352,6 @@ void DriverLoop(){
 
         ColorRead();
         drivetrain.UpdateHeading();
-        Brain.Screen.setCursor(8, 1);
-        Brain.Screen.print("%f", drivetrain._heading);
-        Brain.Screen.print("       ");
 
         // TurretUpdate();
     // }
@@ -277,17 +367,39 @@ void Driver(){
 }
 
 void Auton(){
-  drivetrain.DriveDist(2.35, 2.35, 10);
-
-  drivetrain.Rotate(90);
-
-  drivetrain.DriveDist(2.35, 2.35, 10);
-
-  drivetrain.Rotate(270);
+  drivetrain.SetSpeed(35, vex::percentUnits::pct);
 
   RaiseTurretPnu();
+
+  drivetrain.Spin((24 * (5.0f / 3.0f)) / wheelCirc);
+
+  vex::this_thread::sleep_for(600);
+
+  drivetrain.Rotate2(90);
+
+  vex::this_thread::sleep_for(600);
+
+  drivetrain.Spin((32 * (5.0f / 3.0f)) / wheelCirc);
+
+  vex::this_thread::sleep_for(600);
+
+  drivetrain.Rotate2(-95);
+
+  drivetrain.Spin((5 * (5.0f / 3.0f)) / wheelCirc);
+
+  vex::this_thread::sleep_for(600);
+
+//   drivetrain.DriveDist(2.35, 2.35, .2f);
+
+//   drivetrain.Rotate(270);
+
+  vex::this_thread::sleep_for(300);
   
   Shoot();
+
+  vex::this_thread::sleep_for(3000);
+
+  IntakeStop();
 }
 
 void SetControls(){

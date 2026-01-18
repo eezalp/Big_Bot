@@ -1,4 +1,5 @@
 
+#pragma once
 #ifndef MCEC_Objects_h
 #define MCEC_Objects_h
 #include "vex.h"
@@ -11,6 +12,10 @@
 #define ABS(num) ((num < 0) ? (num * -1) : num)
 
 typedef std::function<void()> ButtonCB;
+
+static const float wheelRad = 3.25f / 2;
+static const float wheelDist = (14.5f + 9) / 2;
+static const float wheelCirc = 2 * wheelRad * M_PI;
 
 namespace MCEC{
     
@@ -35,9 +40,11 @@ namespace MCEC{
             void SpinL(float);
             void SpinR(float);
             void Spin(float revs);
-            void Rotate(int);
-            int ReadLeft();
-            int ReadRight();
+            void Rotate(int deg, bool cw = false);
+            void SetSpeed(float speed = 50, vex::percentUnits units = vex::percentUnits::pct);
+            float ReadLeft();
+            float ReadRight();
+            void Rotate2(float rotation);
             void SetInertial(vex::inertial* _inertial);
             float curPowerR, curPowerL, _heading;
             int Lpower, Rpower;
