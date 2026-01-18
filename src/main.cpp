@@ -100,71 +100,27 @@ enum TurretStates{LowGoal, Raising, HighGoal, Lowering};
 TurretStates turretState = TurretStates::LowGoal;
 
 void LowerTurretPnu();
+void ShivUp();
 
 void RaiseTurretPnu(){
     turretPiston.set(true);
     controls.X.SetOnPress(LowerTurretPnu);
 }
 
+void ShivDown(){
+    shivPiston.set(false);
+    controls.Y.SetOnPress(ShivUp);
+}
+
+void ShivUp(){
+    shivPiston.set(true);
+    controls.Y.SetOnPress(ShivDown);
+}
+
 void LowerTurretPnu(){
     turretPiston.set(false);
     controls.X.SetOnPress(RaiseTurretPnu);
 }
-
-void LowerTurret(){
-  if(MOTOR_TURRET){
-    turretDriver.spin(vex::forward, 120, vex::rpm);
-  }else{
-    turretPiston.set(true);
-  }
-}
-// bool xd = false;
-// void TurretUpdate(){
-//     Brain.Screen.setCursor(1, 1);
-//     switch(turretState){
-//         case TurretStates::LowGoal:
-//             if(controls.xDown && !xd){
-//                 RaiseTurretPnu();
-//                 turretState = TurretStates::HighGoal;
-//                 xd = true;
-//             }else if(controls.yDown && false){
-                
-//             }else if(!controls.xDown){
-//               xd = false;
-//             } 
-//             Brain.Screen.print("LowGoal   ");
-//             break;
-//         case TurretStates::Raising:
-//             if(turretPos.angle(vex::percent) >= TURRET_MAX_ANGLE){
-//                 turretDriver.stop(vex::brakeType::brake);
-//                 turretState = TurretStates::HighGoal;
-//             }
-//             Brain.Screen.print("Raising   ");
-//             break;
-//         case TurretStates::HighGoal:
-//             if(controls.xDown && !xd){
-//                 LowerTurretPnu();
-//                 turretState = TurretStates::LowGoal;
-//                 xd = true;
-//             }else if(controls.yDown && false){
-                
-//             }else if(!controls.xDown){
-//               xd = false;
-//             }
-//             Brain.Screen.print("HighGoal   ");
-//             break;
-//         case TurretStates::Lowering:
-//             if(turretPos.angle(vex::percent) <= TURRET_MIN_ANGLE){
-//                 turretDriver.stop(vex::brakeType::hold);
-//                 turretState = TurretStates::LowGoal;
-//             }
-//             Brain.Screen.print("Lowering   ");
-//             break;
-//     }
-//     Brain.Screen.setCursor(2, 1);
-//     Brain.Screen.print(turretPos.angle(vex::percent));
-//     Brain.Screen.print("     ");
-// }
 
 void ColorDoorOpen(){
     sorterDoor.spinToPosition(5, vex::degrees, 90, vex::rpm, false);
@@ -307,10 +263,6 @@ void DriverLoop(){
         Brain.Screen.print("%f", drivetrain._heading);
         Brain.Screen.print("       ");
 
-        Brain.Screen.setCursor(9, 1);
-        Brain.Screen.print("(%d, %d)", drivetrain.ReadRight(), drivetrain.ReadLeft());
-        Brain.Screen.print("       ");
-
         // TurretUpdate();
     // }
     // vex::this_thread::sleep_for(10);
@@ -325,11 +277,11 @@ void Driver(){
 }
 
 void Auton(){
-  drivetrain.Spin(2.35);
+  drivetrain.DriveDist(2.35, 2.35, 10);
 
   drivetrain.Rotate(90);
 
-  drivetrain.Spin(2.35);
+  drivetrain.DriveDist(2.35, 2.35, 10);
 
   drivetrain.Rotate(270);
 
@@ -340,6 +292,7 @@ void Auton(){
 
 void SetControls(){
     controls.X.SetOnPress(LowerTurretPnu);
+    controls.Y.SetOnPress(ShivDown);
 
     controls.R1.SetOnPress(Shoot);
     controls.R2.SetOnPress(Store);
@@ -350,6 +303,7 @@ void SetControls(){
     controls.R2.SetOnRelease(IntakeStop);
     controls.L1.SetOnRelease(IntakeStop);
     controls.L2.SetOnRelease(IntakeStop);
+    
 
     if(!comp.isFieldControl()){
         controls.Down.SetOnPress(Auton);

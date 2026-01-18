@@ -1,6 +1,10 @@
 #include "MCEC_Objects.h"
 #include "Vex.h"
 
+static const float wheelRad = 1.625f;
+static const float wheelDist = (14.5f + 9) / 2;
+static const float wheelCirc = 2 * wheelRad * M_PI;
+
 float MCEC::Lerp(float a, float b, float t){
     return ((1 - t) * a) + (b * t);
 }
@@ -29,18 +33,17 @@ int Drivetrain8::ReadRight(){
 }
 
 void Drivetrain8::UpdateHeading(){
-    static const float wheelDist = (14.5f + 9) / 2;
-    static const float wheelCirc = 2 * 1.625f * M_PI;
-    static int16_t lastR, lastL, lastIH;
+    static float headingMotor = 0;
+    static int16_t lastR, lastL;
     int16_t curR, curL;
 
     curR = ReadLeft();
     curR = ReadRight();
 
+    headingMotor += (wheelCirc * (curR - curL) / wheelDist);
     
-    _heading += (inertial->heading() - lastIH);// * 0.8f + (wheelCirc * (curR - curL) / wheelDist) * 0.2f;
+    _heading += inertial->heading() * 0.8f + headingMotor * 0.2f;
 
-    lastIH = inertial->heading();
     lastR = curR;
     lastL = curL;
 }
@@ -112,8 +115,9 @@ void Drivetrain8::Stop(){
 }
 
 void Drivetrain8::Rotate(int deg){
-  while(inertial->heading() < deg){
-    Drive(0, 30);
+  Drive(-30, 30);
+  while(_heading < deg){
+    UpdateHeading();
   }
 }
 
@@ -129,8 +133,30 @@ void Drivetrain8::Spin(float revs){
   _mL4.spinTo(revs, vex::rotationUnits::rev, true);
 }
 
-void Drivetrain8::DriveDist(int dL, int dR){
+void Drivetrain8::SpinR(float revs){
+  _mR1.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR2.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR3.spinTo(revs, vex::rotationUnits::rev, false);
+  _mR4.spinTo(revs, vex::rotationUnits::rev, false);
+}
+void Drivetrain8::SpinL(float revs){
+  _mL1.spinTo(revs, vex::rotationUnits::rev, false);
+  _mL2.spinTo(revs, vex::rotationUnits::rev, false);
+  _mL3.spinTo(revs, vex::rotationUnits::rev, false);
+  _mL4.spinTo(revs, vex::rotationUnits::rev, false);
+}
 
+void Drivetrain8::DriveDist(float dL, float dR, int sec){
+    float 
+        lSpeed = dL / sec / wheelCirc, 
+        rSpeed = dR / sec / wheelCirc;
+    int rStart = ReadRight();
+    int lStart = ReadLeft();
+
+    SpinR(rSpeed);
+    SpinL(lSpeed);
+
+    while(ReadRight() <= rSpeed != ReadLeft() <= lSpeed) { }
 }
 
 void Controller::Set(){

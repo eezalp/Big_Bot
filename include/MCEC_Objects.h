@@ -28,10 +28,12 @@ namespace MCEC{
             // @param joyX: input from -100 to 100
             // @param joyY: input from -100 to 100
             void Drive(int joyX, int joyY);
-            void DriveDist(int dL, int dR);
+            void DriveDist(float dL, float dR, int sec);
             void ApplyPower(int lPow, int rPow);
             void Stop();
             void UpdateHeading();
+            void SpinL(float);
+            void SpinR(float);
             void Spin(float revs);
             void Rotate(int);
             int ReadLeft();
